@@ -1,0 +1,278 @@
+#!/bin/sh
+##
+## kakmerge by lenormf
+##
+## Git configuration:
+##
+## git config merge.tool kakmerge
+## git config mergetool.kakmerge.trustExitCode true
+## git config mergetool.kakmerge.cmd "env LOCAL=\"\${LOCAL}\" BASE=\"\${BASE}\" REMOTE=\"\${REMOTE}\" MERGED=\"\${MERGED}\" kakmerge"
+##
+
+## Code loaded by the server, when the clients are being spawned into the layout
+readonly KAKMERGE_CMDS='
+    define-command kakmerge-search -docstring %{
+        Search for the contents of the main selection in all clients (local, base, remote, merged)
+    } %{ eval -draft %{
+        exec -save-regs "" <space> *
+        exec -client local n
+        exec -client base n
+        exec -client remote n
+    } }
+
+    define-command kakmerge-abort -docstring %{
+        Abort the current merge, and close all opened clients in the current merge session (local, base, remote, merged)
+    } %{ nop %sh{
+        kakmerge -c abort "${kak_session}"
+    } }
+
+    define-command -hidden kakmerge-done-force -docstring %{
+        Mark the current buffer as merged, without checking for un-merged conflicts
+    } %{ nop %sh{
+        kakmerge -c done "${kak_session}"
+    } }
+    alias global kakmerge-done! kakmerge-done-force
+
+    define-command kakmerge-done -docstring %{
+        Validate the merge changes, and close all opened clients in the current merge session (local, base, remote, merged)
+    } %{
+        try %{
+            ## make sure no un-merged conflicts are left in the buffer
+            exec -draft \%s^<lt>{7}<ret>
+            eval -client merged echo -markup {Error}Un-merged conflicts remain in the buffer
+        } catch %{
+            kakmerge-done-force
+        }
+    }
+
+    define-command kakmerge-pick -docstring %{
+        kakmerge-pick {local,base,remote}: Replace the merged buffer with changes picked from a given version
+    } -params 1 -shell-candidates %{
+        printf "local\nbase\nremote\n"
+    } %{ nop %sh{
+        kakmerge -c pick "${kak_session}" "${1}"
+    } }
+
+    define-command kakmerge-next-conflict -docstring %{
+        make all clients center the view on the next merge conflict
+    } %{ evaluate-commands -client merged -save-regs / %{
+                ## place the cursor on the line of the conflict
+                exec /^<lt>{7}<ret> gh vc
+
+                eval -draft -save-regs / %{
+                        ## select the whole conflict
+                        exec ?^<gt>{7}<ret>
+
+                        ## select the first hunk and have it searched for in the local client
+                        eval -draft -save-regs / %{ try %{
+                            exec -save-regs "" 1 s\A<lt>[^\n]+\n(.*?)(^[|=]{7})<ret> *
+                            exec -client local n
+                        } }
+
+                        ## select the middle hunk if it exists, and have it searched for in the base client
+                        eval -draft -save-regs / %{ try %{
+                            exec -save-regs "" 1 s^\|{7}.*?^(.*?)^={7}<ret> *
+                            exec -client base n
+                        } }
+
+                        ## select the second hunk and have it searched for in the remote client
+                        eval -draft -save-regs / %{
+                            exec -save-regs "" 1 s^={7}\n(^.*?)^>{7}\z<ret> *
+                            exec -client remote n
+                        }
+                }
+        }
+    }
+'
+
+## Code loaded by the client that holds the merge buffer
+readonly MERGED_SCRIPT='
+    add-highlighter window/ regex "^([<>]{7})\s" 1:meta
+    add-highlighter window/ regex "^<{7}.+?^(={7}).+?^>{7}" 1:meta
+    add-highlighter window/ regex "^<{7}.+?^(\|{7}).+?^>{7}" 1:meta
+
+    kakmerge-next-conflict
+'
+
+log_msg() {
+    printf '%s\n' "$*"
+}
+
+log_error() {
+    log_msg "$@" >&2
+}
+
+log_fatal() {
+    log_error "$@"
+    exit 1
+}
+
+usage() {
+    log_msg "Usage: $0 [-h] [-c <cmd>] [data]...
+
+Options:
+  -c <cmd> Execute command <cmd> (default: merge), can be one of: merge, abort, done, pick
+
+Meta-data can be passed to the commands, and varies accordingly:
+  merge                              Spawn instances of Kakoune to resolve the merge conflict
+  {abort,done} <session>             Execute the command in the given session
+  pick <session> {local,base,remote} Pick a file version in the given session"
+}
+
+do_create_layout_tmux() {
+    kak_session="${1}"
+
+    # NOTE: rename the session from all the new clients,
+    #       in case they decide to rename the session
+    tmux \
+        split-window -vb      kak -c "${kak_session}" \
+                                  -e '
+                                      rename-client local
+                                      rename-session %{'"${kak_session}"'}
+                                      nop %sh{ tmux wait-for -S kak-local-"${kak_session}" }
+                                      ' \; \
+        wait-for kak-local-"${kak_session}" \; \
+        split-window -h -p 66 kak -c "${kak_session}" \
+                                  -e '
+                                      rename-client base
+                                      rename-session %{'"${kak_session}"'}
+                                      nop %sh{ tmux wait-for -S kak-base-"${kak_session}" }
+                                      '   \; \
+        wait-for kak-base-"${kak_session}" \; \
+        split-window -h -p 50 kak -c "${kak_session}" \
+                                  -e '
+                                      rename-client remote
+                                      rename-session %{'"${kak_session}"'}
+                                      nop %sh{ tmux wait-for -S kak-remote-"${kak_session}" }
+                                      ' \; \
+        wait-for kak-remote-"${kak_session}" \; \
+        select-pane -D
+}
+
+cmd_merge() {
+    multiplexer="${1}"
+    kak_session="kakmerge-$$"
+    do_create_layout=""
+
+    shift
+
+    if [ -z "${LOCAL}" ] || [ -z "${BASE}" ] || [ -z "${REMOTE}" ] || [ -z "${MERGED}" ]; then
+        log_fatal "The required environment variables exported during a merge are missing"
+    fi
+
+    kak -d -s "${kak_session}" -E "${KAKMERGE_CMDS}" || log_fatal "Unable to spawn a Kakoune server"
+
+    if [ -n "${TMUX}" ]; then
+        do_create_layout="do_create_layout_tmux"
+    fi
+
+    if [ -z "${do_create_layout}" ]; then
+        log_fatal "Unsupported multiplexer"
+    fi
+
+    eval "${do_create_layout} '${kak_session}'"
+
+    kak -c "${kak_session}" -e "
+        eval -client local edit! -readonly %{${LOCAL}}
+        eval -client base edit! -readonly %{${BASE}}
+        eval -client remote edit! -readonly %{${REMOTE}}
+
+        rename-client merged
+        edit! %{${MERGED}}
+
+        ${MERGED_SCRIPT}
+    "
+}
+
+cmd_abort() {
+    ## XXX: unused
+    multiplexer="${1}"
+    kak_session="${2}"
+
+    if [ -z "${kak_session}" ]; then
+        log_fatal "No session name given"
+    fi
+
+    echo kill 1 | kak -p "${kak_session}"
+}
+
+cmd_done() {
+    ## XXX: unused
+    multiplexer="${1}"
+    kak_session="${2}"
+
+    if [ -z "${kak_session}" ]; then
+        log_fatal "No session name given"
+    fi
+
+    echo kill | kak -p "${kak_session}"
+}
+
+cmd_pick() {
+    ## XXX: unused
+    multiplexer="${1}"
+    kak_session="${2}"
+    which="${3}"
+
+    if [ -z "${kak_session}" ]; then
+        log_fatal "No session name given"
+    elif [ -z "${which}" ]; then
+        log_fatal "No file version name given"
+    fi
+
+    case "${which}" in
+        "local"|"base"|"remote");;
+        *)
+            log_error "Unsupported file version: ${which}"
+            usage
+            exit 1;;
+    esac
+
+    if [ -z "${LOCAL}" ] || [ -z "${BASE}" ] || [ -z "${REMOTE}" ] || [ -z "${MERGED}" ]; then
+        log_fatal "The required environment variables exported during a merge are missing"
+    fi
+
+    case "${which}" in
+        "local")  which="${LOCAL}";;
+        "base")   which="${BASE}";;
+        "remote") which="${REMOTE}";;
+    esac
+
+    printf 'evaluate-commands -client merged %%{
+        nop %%sh{cp "%s" "${MERGED}"}
+        edit!
+    }' "${which}" | kak -p "${kak_session}"
+}
+
+main() {
+    command="merge"
+    multiplexer=""
+
+    while getopts hc:m: o; do
+        case "${o}" in
+            h)
+                usage
+                exit;;
+            c)
+                command="${OPTARG}";;
+            m)
+                multiplexer="${OPTARG}";;
+            ?)
+                usage
+                exit 1;;
+        esac
+    done
+    shift $((OPTIND - 1))
+
+    case "${command}" in
+        "merge"|"abort"|"done"|"pick");;
+        *)
+            log_error "Unsupported command: ${command}"
+            usage
+            exit 1;;
+    esac
+
+    eval "cmd_${command} '${multiplexer}'" "$@"
+}
+
+main "$@"
