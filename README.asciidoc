@@ -9,6 +9,8 @@ When invoked, the script splits the current pane in four and displays
 information necessary to perform a 3-way merge (local version, remote version,
 ancestor and merged result).
 
+image::img/screen.png[3-way merge with kakmerge]
+
 Configuration
 -------------
 
