@@ -56,10 +56,12 @@ readonly KAKMERGE_CMDS='
     define-command kakmerge-next-conflict -docstring %{
         make all clients center the view on the next merge conflict
     } %{ evaluate-commands -client merged -save-regs / %{
+            try %{
                 ## place the cursor on the line of the conflict
                 exec /^<lt>{7}<ret> gh vc
 
                 eval -draft -save-regs / %{
+                    try %{
                         ## select the whole conflict
                         exec ?^<gt>{7}<ret>
 
@@ -76,11 +78,17 @@ readonly KAKMERGE_CMDS='
                         } }
 
                         ## select the second hunk and have it searched for in the remote client
-                        eval -draft -save-regs / %{
+                        eval -draft -save-regs / %{ try %{
                             exec -save-regs "" 1 s^={7}\n(^.*?)^>{7}\z<ret> *
                             exec -client remote n
-                        }
+                        } }
+                    } catch %{
+                        eval -client merged echo -markup {Error}Corrupted conflict (no closing brackets)
+                    }
                 }
+            } catch %{
+                echo -markup {Error}No other conflict to merge in the buffer
+            }
         }
     }
 '
