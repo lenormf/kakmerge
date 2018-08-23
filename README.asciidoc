@@ -16,7 +16,7 @@ Configuration
 
 Place the `kakmerge` script into a directory of the `$PATH`.
 
-Running the following commands to configure `git`:
+Run the following commands to configure `git`:
 
 ```sh
 git config merge.tool kakmerge
