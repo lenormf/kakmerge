@@ -1,0 +1,52 @@
+kakmerge
+========
+
+`kakmerge` is a merge tool for https://git-scm.com/[Git] that spawns instances
+of http://kakoune.org/[Kakoune] within a https://github.com/tmux/tmux[tmux]
+session.
+
+When invoked, the script splits the current pane in four and displays
+information necessary to perform a 3-way merge (local version, remote version,
+ancestor and merged result).
+
+Configuration
+-------------
+
+Place the `kakmerge` script into a directory of the `$PATH`.
+
+Running the following commands to configure `git`:
+
+```sh
+git config merge.tool kakmerge
+git config mergetool.kakmerge.trustExitCode true
+git config mergetool.kakmerge.cmd kakmerge
+```
+
+Make sure to have a look at the
+https://www.git-scm.com/docs/git-config#git-config-mergetoollttoolgtpath[mergetool `git` configuration]
+to fine tune it.
+
+Testing
+-------
+
+You can test `kakmerge` on a demo 3-way merge by using the `test.sh` script
+provided in this repository.
+
+Commands
+--------
+
+Several commands are available in a merge session, to simplify the merging
+process:
+
+*kakmerge-search*: search for the contents of the main selection in all clients
+
+*kakmerge-abort*: discard the current merge
+
+*kakmerge-done*: validate the current merge
+
+*kakmerge-pick*: pick a version of the code from one of the three versions of the buffer
+
+*kakmerge-next-conflict*: jump to the next conflict in the merge buffer
+
+Make sure to read the onboard documentation of the commands for more specific
+description of the commands.
