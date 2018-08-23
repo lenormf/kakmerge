@@ -6,7 +6,7 @@
 ##
 ## git config merge.tool kakmerge
 ## git config mergetool.kakmerge.trustExitCode true
-## git config mergetool.kakmerge.cmd "env LOCAL=\"\${LOCAL}\" BASE=\"\${BASE}\" REMOTE=\"\${REMOTE}\" MERGED=\"\${MERGED}\" kakmerge"
+## git config mergetool.kakmerge.cmd kakmerge
 ##
 
 ## Code loaded by the server, when the clients are being spawned into the layout
