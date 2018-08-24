@@ -99,7 +99,12 @@ readonly MERGED_SCRIPT='
     add-highlighter window/ regex "^<{7}.+?^(={7}).+?^>{7}" 1:meta
     add-highlighter window/ regex "^<{7}.+?^(\|{7}).+?^>{7}" 1:meta
 
-    kakmerge-next-conflict
+    try %{
+        # XXX: jump to the next conflict if there isnt already one on the current line
+        exec -draft <a-x> <a-k>^<lt>{7}<ret>
+    } catch %{
+        kakmerge-next-conflict
+    }
 '
 
 log_msg() {
