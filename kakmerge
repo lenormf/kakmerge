@@ -47,7 +47,7 @@ readonly KAKMERGE_CMDS='
 
     define-command kakmerge-pick -docstring %{
         kakmerge-pick {local,base,remote}: Replace the merged buffer with changes picked from a given version
-    } -params 1 -shell-candidates %{
+    } -params 1 -shell-script-candidates %{
         printf "local\nbase\nremote\n"
     } %{ nop %sh{
         kakmerge -c pick "${kak_session}" "${1}"
