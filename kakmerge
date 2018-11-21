@@ -162,6 +162,28 @@ do_create_layout_tmux() {
         select-pane -D
 }
 
+do_create_layout_kitty() {
+    kak_session="${1}"
+
+    kitty @ goto-layout fat
+    kitty @ new-window kak -c "${kak_session}" \
+                       -e '
+                       rename-client local
+                       rename-session %{'"${kak_session}"'}
+                       ' >/dev/null
+    kitty @ new-window kak -c "${kak_session}" \
+                       -e '
+                       rename-client base
+                       rename-session %{'"${kak_session}"'}
+                       ' >/dev/null
+    kitty @ new-window kak -c "${kak_session}" \
+                       -e '
+                       rename-client remote
+                       rename-session %{'"${kak_session}"'}
+                       ' >/dev/null
+    kitty @ focus-window --match id:"${KITTY_WINDOW_ID}"
+}
+
 cmd_merge() {
     multiplexer="${1}"
     kak_session="kakmerge-$$"
@@ -177,6 +199,10 @@ cmd_merge() {
 
     if [ -n "${TMUX}" ]; then
         do_create_layout="do_create_layout_tmux"
+    fi
+
+    if [ -n "${KITTY_WINDOW_ID}" ]; then
+        do_create_layout="do_create_layout_kitty"
     fi
 
     if [ -z "${do_create_layout}" ]; then
