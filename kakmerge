@@ -127,10 +127,11 @@ log_fatal() {
 }
 
 usage() {
-    log_msg "Usage: $0 [-h] [-c <cmd>] [data]...
+    log_msg "Usage: $0 [-h] [-m <multiplexer>] [-c <cmd>] [data]...
 
 Options:
-  -c <cmd> Execute command <cmd> (default: merge), can be one of: merge, abort, done, pick
+  -m {tmux,kitty}  Use a specific terminal multiplexer (default: tmux)
+  -c <cmd>         Execute command <cmd> (default: merge), can be one of: merge, abort, done, pick
 
 Meta-data can be passed to the commands, and varies accordingly:
   merge                              Spawn instances of Kakoune to resolve the merge conflict
@@ -168,6 +169,42 @@ do_create_layout_tmux() {
         select-pane -D
 }
 
+do_create_layout_kitty() {
+    kak_session="${1}"
+
+    kitty @ goto-layout fat
+    [ $? -ne 0 ] && log_fatal "It is required to enable remote control in kitty"
+
+    infinity=2147483647
+    sleep "${infinity}" &
+    wait_local=$!
+    sleep "${infinity}" &
+    wait_base=$!
+    sleep "${infinity}" &
+    wait_remote=$!
+
+    kitty @ new-window kak -c "${kak_session}" \
+                       -e '
+                       rename-client local
+                       rename-session %{'"${kak_session}"'}
+                       nop %sh{ kill '"${wait_local}"' }
+                       ' >/dev/null
+    kitty @ new-window kak -c "${kak_session}" \
+                       -e '
+                       rename-client base
+                       rename-session %{'"${kak_session}"'}
+                       nop %sh{ kill '"${wait_base}"' }
+                       ' >/dev/null
+    kitty @ new-window kak -c "${kak_session}" \
+                       -e '
+                       rename-client remote
+                       rename-session %{'"${kak_session}"'}
+                       nop %sh{ kill '"${wait_remote}"' }
+                       ' >/dev/null
+    kitty @ focus-window --match id:"${KITTY_WINDOW_ID}"
+    wait "${wait_local}" "${wait_base}" "${wait_remote}" >/dev/null
+}
+
 cmd_merge() {
     multiplexer="${1}"
     kak_session="kakmerge-$$"
@@ -181,8 +218,12 @@ cmd_merge() {
 
     kak -d -s "${kak_session}" -E "${KAKMERGE_CMDS}" || log_fatal "Unable to spawn a Kakoune server"
 
-    if [ -n "${TMUX}" ]; then
+    if [ -n "${multiplexer}" ]; then
+        do_create_layout="do_create_layout_${multiplexer}"
+    elif [ -n "${TMUX}" ]; then
         do_create_layout="do_create_layout_tmux"
+    elif [ -n "${KITTY_WINDOW_ID}" ]; then
+        do_create_layout="do_create_layout_kitty"
     fi
 
     if [ -z "${do_create_layout}" ]; then
@@ -241,10 +282,7 @@ cmd_pick() {
 
     case "${which}" in
         "local"|"base"|"remote");;
-        *)
-            log_error "Unsupported file version: ${which}"
-            usage
-            exit 1;;
+        *) log_fatal "Unsupported file version: ${which}";;
     esac
 
     if [ -z "${LOCAL}" ] || [ -z "${BASE}" ] || [ -z "${REMOTE}" ] || [ -z "${MERGED}" ]; then
@@ -285,10 +323,12 @@ main() {
 
     case "${command}" in
         "merge"|"abort"|"done"|"pick");;
-        *)
-            log_error "Unsupported command: ${command}"
-            usage
-            exit 1;;
+        *) log_fatal "Unsupported command: ${command}";;
+    esac
+
+    case "${multiplexer}" in
+        ""|"tmux"|"kitty");;
+        *) log_fatal "Unsupported multiplexer: ${multiplexer}";;
     esac
 
     eval "cmd_${command} '${multiplexer}'" "$@"
