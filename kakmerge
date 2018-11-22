@@ -15,9 +15,12 @@ readonly KAKMERGE_CMDS='
         Search for the contents of the main selection in all clients (local, base, remote, merged)
     } %{ eval -draft %{
         exec -save-regs "" <space> *
-        exec -client local n
-        exec -client base n
-        exec -client remote n
+        try %{ exec -client local n }
+        try %{ exec -client base n }
+        try %{ exec -client remote n }
+        eval -client local echo ""
+        eval -client base echo ""
+        eval -client remote echo ""
     } }
 
     define-command kakmerge-abort -docstring %{
@@ -69,18 +72,21 @@ readonly KAKMERGE_CMDS='
                         eval -draft -save-regs / %{ try %{
                             exec -save-regs "" 1 s\A<lt>[^\n]+\n(.*?)(^[|=]{7})<ret> *
                             exec -client local n
+                            exec -client local echo ""
                         } }
 
                         ## select the middle hunk if it exists, and have it searched for in the base client
                         eval -draft -save-regs / %{ try %{
                             exec -save-regs "" 1 s^\|{7}.*?^(.*?)^={7}<ret> *
                             exec -client base n
+                            exec -client base echo ""
                         } }
 
                         ## select the second hunk and have it searched for in the remote client
                         eval -draft -save-regs / %{ try %{
                             exec -save-regs "" 1 s^={7}\n(^.*?)^>{7}\z<ret> *
                             exec -client remote n
+                            exec -client remote echo ""
                         } }
                     } catch %{
                         eval -client merged echo -markup {Error}Corrupted conflict (no closing brackets)
