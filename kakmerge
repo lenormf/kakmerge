@@ -167,6 +167,8 @@ do_create_layout_kitty() {
     kak_session="${1}"
 
     kitty @ goto-layout fat
+    [ $? -ne 0 ] && exit 1  # kitty prints a nice message if it doesn't support remote control
+
     kitty @ new-window kak -c "${kak_session}" \
                        -e '
                        rename-client local
