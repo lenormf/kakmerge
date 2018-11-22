@@ -206,7 +206,7 @@ cmd_merge() {
     fi
 
     if [ -z "${do_create_layout}" ]; then
-        log_fatal "Unsupported multiplexer ${multiplexer}"
+        log_fatal "Unsupported multiplexer"
     fi
 
     eval "${do_create_layout} '${kak_session}'"
