@@ -167,7 +167,7 @@ do_create_layout_kitty() {
     kak_session="${1}"
 
     kitty @ goto-layout fat
-    [ $? -ne 0 ] && exit 1  # kitty prints a nice message if it doesn't support remote control
+    [ $? -ne 0 ] && log_fatal "It is required to enable remote control in kitty"
 
     sleep 10 &
     wait_local=$!
