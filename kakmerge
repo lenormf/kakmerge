@@ -121,10 +121,11 @@ log_fatal() {
 }
 
 usage() {
-    log_msg "Usage: $0 [-h] [-c <cmd>] [data]...
+    log_msg "Usage: $0 [-h] [-m <multiplexer>] [-c <cmd>] [data]...
 
 Options:
-  -c <cmd> Execute command <cmd> (default: merge), can be one of: merge, abort, done, pick
+  -m {tmux,kitty}  Use a specific terminal multiplexer (default: tmux)
+  -c <cmd>         Execute command <cmd> (default: merge), can be one of: merge, abort, done, pick
 
 Meta-data can be passed to the commands, and varies accordingly:
   merge                              Spawn instances of Kakoune to resolve the merge conflict
