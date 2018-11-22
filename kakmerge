@@ -198,9 +198,7 @@ cmd_merge() {
     kak -d -s "${kak_session}" -E "${KAKMERGE_CMDS}" || log_fatal "Unable to spawn a Kakoune server"
 
     if [ -n "${multiplexer}" ]; then
-        if type "do_create_layout_${multiplexer}" >/dev/null; then
-            do_create_layout="do_create_layout_${multiplexer}"
-        fi
+        do_create_layout="do_create_layout_${multiplexer}"
     elif [ -n "${TMUX}" ]; then
         do_create_layout="do_create_layout_tmux"
     elif [ -n "${KITTY_WINDOW_ID}" ]; then
@@ -309,6 +307,14 @@ main() {
         "merge"|"abort"|"done"|"pick");;
         *)
             log_error "Unsupported command: ${command}"
+            usage
+            exit 1;;
+    esac
+
+    case "${multiplexer}" in
+        ""|"tmux"|"kitty");;
+        *)
+            log_error "Unsupported multiplexer: ${multiplexer}"
             usage
             exit 1;;
     esac
