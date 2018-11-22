@@ -196,10 +196,6 @@ cmd_merge() {
         eval -client base edit! -readonly %{${BASE}}
         eval -client remote edit! -readonly %{${REMOTE}}
 
-        eval -client local 'set-option window autoinfo \"\"'
-        eval -client base 'set-option window autoinfo \"\"'
-        eval -client remote 'set-option window autoinfo \"\"'
-
         rename-client merged
         edit! %{${MERGED}}
 
