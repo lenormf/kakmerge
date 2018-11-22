@@ -275,8 +275,7 @@ cmd_pick() {
 
     case "${which}" in
         "local"|"base"|"remote");;
-        *)
-            log_fatal "Unsupported file version: ${which}";;
+        *) log_fatal "Unsupported file version: ${which}";;
     esac
 
     if [ -z "${LOCAL}" ] || [ -z "${BASE}" ] || [ -z "${REMOTE}" ] || [ -z "${MERGED}" ]; then
@@ -317,14 +316,12 @@ main() {
 
     case "${command}" in
         "merge"|"abort"|"done"|"pick");;
-        *)
-            log_fatal "Unsupported command: ${command}";;
+        *) log_fatal "Unsupported command: ${command}";;
     esac
 
     case "${multiplexer}" in
         ""|"tmux"|"kitty");;
-        *)
-            log_fatal "Unsupported multiplexer: ${multiplexer}";;
+        *) log_fatal "Unsupported multiplexer: ${multiplexer}";;
     esac
 
     eval "cmd_${command} '${multiplexer}'" "$@"
