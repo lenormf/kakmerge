@@ -175,6 +175,7 @@ do_create_layout_kitty() {
     kitty @ goto-layout fat
     [ $? -ne 0 ] && log_fatal "It is required to enable remote control in kitty"
 
+    ## Maximum value that has to be handled by `sleep` as per the POSIX standard
     infinity=2147483647
     sleep "${infinity}" &
     wait_local=$!
