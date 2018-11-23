@@ -169,11 +169,12 @@ do_create_layout_kitty() {
     kitty @ goto-layout fat
     [ $? -ne 0 ] && log_fatal "It is required to enable remote control in kitty"
 
-    sleep 10 &
+    infinity=2147483647
+    sleep "${infinity}" &
     wait_local=$!
-    sleep 10 &
+    sleep "${infinity}" &
     wait_base=$!
-    sleep 10 &
+    sleep "${infinity}" &
     wait_remote=$!
 
     kitty @ new-window kak -c "${kak_session}" \
@@ -195,7 +196,7 @@ do_create_layout_kitty() {
                        nop %sh{ kill '"${wait_remote}"' }
                        ' >/dev/null
     kitty @ focus-window --match id:"${KITTY_WINDOW_ID}"
-    wait "${wait_local}" "${wait_base}" "${wait_remote}"
+    wait "${wait_local}" "${wait_base}" "${wait_remote}" >/dev/null
 }
 
 cmd_merge() {
