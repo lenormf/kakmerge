@@ -11,7 +11,7 @@ main() {
 
     git config --local merge.tool kakmerge
     git config --local mergetool.kakmerge.trustExitCode true
-    git config --local mergetool.kakmerge.cmd "env LOCAL=\"\${LOCAL}\" BASE=\"\${BASE}\" REMOTE=\"\${REMOTE}\" MERGED=\"\${MERGED}\" kakmerge"
+    git config --local mergetool.kakmerge.cmd "env LOCAL=\"\${LOCAL}\" BASE=\"\${BASE}\" REMOTE=\"\${REMOTE}\" MERGED=\"\${MERGED}\" kakmerge $*"
 
     cat <<"EOF">animals.txt
 cat
