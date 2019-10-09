@@ -142,27 +142,22 @@ Meta-data can be passed to the commands, and varies accordingly:
 do_create_layout_tmux() {
     kak_session="${1}"
 
-    # NOTE: rename the session from all the new clients,
-    #       in case they decide to rename the session
     tmux \
         split-window -vb      kak -c "${kak_session}" \
                                   -e '
                                       rename-client local
-                                      rename-session %{'"${kak_session}"'}
                                       nop %sh{ tmux wait-for -S kak-local-"${kak_session}" }
                                       ' \; \
         wait-for kak-local-"${kak_session}" \; \
         split-window -h -p 66 kak -c "${kak_session}" \
                                   -e '
                                       rename-client base
-                                      rename-session %{'"${kak_session}"'}
                                       nop %sh{ tmux wait-for -S kak-base-"${kak_session}" }
                                       '   \; \
         wait-for kak-base-"${kak_session}" \; \
         split-window -h -p 50 kak -c "${kak_session}" \
                                   -e '
                                       rename-client remote
-                                      rename-session %{'"${kak_session}"'}
                                       nop %sh{ tmux wait-for -S kak-remote-"${kak_session}" }
                                       ' \; \
         wait-for kak-remote-"${kak_session}" \; \
@@ -187,19 +182,16 @@ do_create_layout_kitty() {
     kitty @ new-window kak -c "${kak_session}" \
                        -e '
                        rename-client local
-                       rename-session %{'"${kak_session}"'}
                        nop %sh{ kill '"${wait_local}"' }
                        ' >/dev/null
     kitty @ new-window kak -c "${kak_session}" \
                        -e '
                        rename-client base
-                       rename-session %{'"${kak_session}"'}
                        nop %sh{ kill '"${wait_base}"' }
                        ' >/dev/null
     kitty @ new-window kak -c "${kak_session}" \
                        -e '
                        rename-client remote
-                       rename-session %{'"${kak_session}"'}
                        nop %sh{ kill '"${wait_remote}"' }
                        ' >/dev/null
     kitty @ focus-window --match id:"${KITTY_WINDOW_ID}"
