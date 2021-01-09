@@ -21,7 +21,7 @@ Run the following commands to configure `git`:
 ```sh
 git config merge.tool kakmerge
 git config mergetool.kakmerge.trustExitCode true
-git config mergetool.kakmerge.cmd kakmerge
+git config mergetool.kakmerge.path kakmerge
 ```
 
 Make sure to have a look at the
