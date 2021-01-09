@@ -209,7 +209,8 @@ cmd_merge() {
         log_fatal "The required environment variables exported during a merge are missing"
     fi
 
-    kak -d -s "${kak_session}" -E "${KAKMERGE_CMDS}" || log_fatal "Unable to spawn a Kakoune server"
+    kak -d -s "${kak_session}" -E "${KAKMERGE_CMDS}" &
+    pid_server=$!
 
     if [ -n "${multiplexer}" ]; then
         do_create_layout="do_create_layout_${multiplexer}"
@@ -221,6 +222,10 @@ cmd_merge() {
 
     if [ -z "${do_create_layout}" ]; then
         log_fatal "Unsupported multiplexer"
+    fi
+
+    if ! kill -0 "${pid_server}"; then
+        log_fatal "Unable to spawn a Kakoune server"
     fi
 
     eval "${do_create_layout} '${kak_session}'"
