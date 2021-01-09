@@ -13,17 +13,17 @@ main() {
     git config --local mergetool.kakmerge.trustExitCode true
     git config --local mergetool.kakmerge.cmd "env LOCAL=\"\${LOCAL}\" BASE=\"\${BASE}\" REMOTE=\"\${REMOTE}\" MERGED=\"\${MERGED}\" kakmerge $*"
 
-    cat <<"EOF">animals.txt
-cat
-dog
-octopus
-octocat
+    cat >animals.txt <<-EOF
+		cat
+		dog
+		octopus
+		octocat
 
-other weird animals
+		other weird animals
 
-octobat
-eof
-EOF
+		octobat
+		eof
+	EOF
 
     git add animals.txt
     git commit -m "Initial commit"
