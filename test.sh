@@ -1,7 +1,7 @@
 #! /bin/sh
 
 get_fullpath() {
-    cd "${1%/*}" && printf %s "${PWD}"
+    cd "$(dirname "$1")" && printf %s "${PWD}"
 }
 
 main() {
