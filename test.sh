@@ -1,9 +1,18 @@
 #! /bin/sh
 
+get_fullpath() {
+    cd "${1%/*}" && printf %s "${PWD}"
+}
+
 main() {
+    dir_repo=$(get_fullpath "$0")
     dir_test=$(mktemp -d "${TMPDIR:-/tmp}"/kakmerge-test-XXXXXX)
 
     printf 'Created temporary directory: %s\n' "${dir_test}"
+
+    export PATH="${dir_repo}:${PATH}"
+
+    printf 'Added directory to PATH to allow invoking local `kakmerge`: %s\n' "${dir_repo}"
 
     cd "${dir_test}"
 
