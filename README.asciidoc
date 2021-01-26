@@ -52,3 +52,9 @@ process:
 
 Make sure to read the onboard documentation of the commands for more specific
 description of the commands.
+
+Usermode
+--------
+
+The `kakmerge` usermode is available in merge sessions, and maps to all
+the commands that do not take any argument (c.f. above).
