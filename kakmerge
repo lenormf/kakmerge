@@ -49,7 +49,7 @@ readonly KAKMERGE_CMDS='
     }
 
     define-command kakmerge-pick -docstring %{
-        kakmerge-pick {local,base,remote}: Replace the merged buffer with changes picked from a given version
+        kakmerge-pick {local,base,remote}: replace the merged buffer with changes picked from a given version
     } -params 1 -shell-script-candidates %{
         printf "local\nbase\nremote\n"
     } %{ nop %sh{
@@ -57,7 +57,7 @@ readonly KAKMERGE_CMDS='
     } }
 
     define-command kakmerge-next-conflict -docstring %{
-        make all clients center the view on the next merge conflict
+        Make all clients center the view on the next merge conflict
     } %{ evaluate-commands -client merged -save-regs / %{
             try %{
                 ## place the cursor on the line of the conflict
