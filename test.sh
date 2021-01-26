@@ -1,7 +1,6 @@
 #! /bin/sh
 
 main() {
-    dir_repo="${PWD}"
     dir_test=$(mktemp -d "${TMPDIR:-/tmp}"/kakmerge-test-XXXXXX)
 
     printf 'Created temporary directory: %s\n' "${dir_test}"
@@ -12,7 +11,7 @@ main() {
 
     git config --local merge.tool kakmerge
     git config --local mergetool.kakmerge.trustExitCode true
-    git config --local mergetool.kakmerge.path "${dir_repo}"/kakmerge
+    git config --local mergetool.kakmerge.cmd "env LOCAL=\"\${LOCAL}\" BASE=\"\${BASE}\" REMOTE=\"\${REMOTE}\" MERGED=\"\${MERGED}\" kakmerge $*"
 
     cat >animals.txt <<-EOF
 		cat
