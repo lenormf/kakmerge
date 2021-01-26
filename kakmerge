@@ -97,6 +97,13 @@ readonly KAKMERGE_CMDS='
             }
         }
     }
+
+    declare-user-mode kakmerge
+
+    map -docstring "Search for the contents of the main selection in all merge clients" global kakmerge s ": kakmerge-search<ret>"
+    map -docstring "Abort the current merge, and close all merge clients" global kakmerge a ": kakmerge-abort<ret>"
+    map -docstring "Validate the merge changes, and close all merge clients" global kakmerge d ": kakmerge-done<ret>"
+    map -docstring "Make all clients center the view on the next merge conflict" global kakmerge n ": kakmerge-next-conflict<ret>"
 '
 
 ## Code loaded by the client that holds the merge buffer
