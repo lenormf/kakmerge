@@ -38,12 +38,12 @@ main() {
     git commit -m "Initial commit"
 
     git checkout -b octodog
-    sed -e 's/octopus/octodog/' -e 's/octobat/octoocto/' -i animals.txt
+    kak -f 'soctopus<ret> coctodog<esc> <percent>soctobat<ret> coctoocto' animals.txt
 
     git commit -am "Replace octopus with octodog"
 
     git checkout master
-    sed -e 's/octopus/octoman/' -e 's/octobat/octo/' -i animals.txt
+    kak -f 'soctopus<ret> coctoman<esc> <percent>soctobat<ret> cocto' animals.txt
 
     git commit -am "Replace octopus with an octoman"
 
