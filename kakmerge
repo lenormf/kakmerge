@@ -137,8 +137,8 @@ usage() {
     log_msg "Usage: $0 [-h] [-m <multiplexer>] [-c <cmd>] [data]...
 
 Options:
-  -m {tmux,kitty}  Use a specific terminal multiplexer (default: tmux)
-  -c <cmd>         Execute command <cmd> (default: merge), can be one of: merge, abort, done, pick
+  -m {tmux,kitty,zellij}  Use a specific terminal multiplexer (default: tmux)
+  -c <cmd>                Execute command <cmd> (default: merge), can be one of: merge, abort, done, pick
 
 Meta-data can be passed to the commands, and varies accordingly:
   merge                              Spawn instances of Kakoune to resolve the merge conflict
@@ -169,6 +169,47 @@ do_create_layout_tmux() {
                                       ' \; \
         wait-for kak-remote-"${kak_session}" \; \
         select-pane -D
+}
+
+do_create_layout_zellij() {
+    kak_session="${1}"
+
+## Maximum value that has to be handled by `sleep` as per the POSIX standard
+    infinity=2147483647
+    sleep "${infinity}" &
+    wait_local=$!
+    sleep "${infinity}" &
+    wait_base=$!
+    sleep "${infinity}" &
+    wait_remote=$!
+
+    zellij \
+        run --close-on-exit --direction down --\
+            kak -c "${kak_session}" \
+            -e '
+            rename-client local
+            nop %sh{ kill '"${wait_local}"' }
+            ';
+    zellij action move-pane up;
+    zellij \
+        run --close-on-exit --direction right --\
+            kak -c "${kak_session}" \
+            -e '
+            rename-client base
+            nop %sh{ kill '"${wait_base}"' }
+            ';
+    zellij action resize increase left;
+    zellij action resize increase left;
+    zellij action resize increase left;
+    zellij \
+        run --close-on-exit --direction right --\
+            kak -c "${kak_session}" \
+            -e '
+            rename-client remote
+            nop %sh{ kill '"${wait_remote}"' }
+            ';
+    zellij action move-focus down
+    wait "${wait_local}" "${wait_base}" "${wait_remote}" >/dev/null
 }
 
 do_create_layout_kitty() {
@@ -221,6 +262,8 @@ cmd_merge() {
 
     if [ -n "${multiplexer}" ]; then
         do_create_layout="do_create_layout_${multiplexer}"
+    elif [ -n "${ZELLIJ}" ]; then
+        do_create_layout="do_create_layout_zellij"
     elif [ -n "${TMUX}" ]; then
         do_create_layout="do_create_layout_tmux"
     elif [ -n "${KITTY_WINDOW_ID}" ]; then
@@ -332,7 +375,7 @@ main() {
     esac
 
     case "${multiplexer}" in
-        ""|"tmux"|"kitty");;
+        ""|"tmux"|"kitty"|"zellij");;
         *) log_fatal "Unsupported multiplexer: ${multiplexer}";;
     esac
 
