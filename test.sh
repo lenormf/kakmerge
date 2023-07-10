@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env sh
 
 get_fullpath() {
     cd "$(dirname "$1")" && printf %s "${PWD}"
